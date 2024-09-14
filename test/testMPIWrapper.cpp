@@ -1,8 +1,8 @@
 #define DOCTEST_CONFIG_IMPLEMENT
+#include <doctest/doctest.h>
 #include <MPIEnvironment.h>
 #include <Operations.h>
 #include <thread>
-#include <doctest/doctest.h>
 
 
 
@@ -93,12 +93,13 @@ TEST_CASE("Scatter&Reduce") {
     const mpi::array result = mpi::reduce<int>(*local + std::move(chunk));
 
     if (!result.empty()) {
-        CHECK(result.size() == DATASIZE / mpi_env->getCommSize());
+        CHECK(result.size() == DATASIZE / static_cast<size_t>(mpi_env->getCommSize()));
         for (int i = 0; const auto& val : result) {
             int acc = 0;
             for (int j = 0; j < mpi_env->getCommSize(); j++) {
                 acc += (j * static_cast<int>(result.size()) + i) * (j * static_cast<int>(result.size()) + i);
             }
+            CHECK(val == acc);
             i++;
         }
         CHECK(local->rank() == 0);
@@ -125,7 +126,7 @@ TEST_CASE("Scatter&AllReduce") {
         }, DATASIZE)
     );
 
-    CHECK(chunk.size() == DATASIZE / mpi_env->getCommSize());
+    CHECK(chunk.size() == DATASIZE / static_cast<size_t>(mpi_env->getCommSize()));
 
     // Process Data in some way
     for (auto& val : chunk) {
@@ -138,7 +139,7 @@ TEST_CASE("Scatter&AllReduce") {
 
     CHECK(result.size() == size);
 
-    CHECK(result.size() == DATASIZE / mpi_env->getCommSize());
+    CHECK(result.size() == DATASIZE / static_cast<size_t>(mpi_env->getCommSize()));
     for (int i = 0; const auto& val : result) {
         int acc = 0;
         for (int j = 0; j < mpi_env->getCommSize(); j++) {
@@ -180,7 +181,7 @@ TEST_CASE("Broadcast&Gather") {
     );
 
     if (!result.empty()) {
-        CHECK(result.size() == DATASIZE * mpi_env->getCommSize());
+        CHECK(result.size() == DATASIZE * static_cast<size_t>(mpi_env->getCommSize()));
         for (size_t i = 0; const auto& val : result) {
             CHECK(val == i * i);
             i = (i + 1) % DATASIZE;
@@ -189,6 +190,24 @@ TEST_CASE("Broadcast&Gather") {
     } else {
         CHECK(local->rank() != 0);
     }
+}
+
+TEST_CASE("GaussianElimination") {
+
+    const int N = 4;
+
+    std::vector<std::vector<double>> A = {
+        {2, -1, 0, 3},
+        {1, 3, 2, -2},
+        {0, 4, 1, -1},
+        {5, -2, 3, 4}
+    };
+
+    std::vector<double> b = {4, 2, 3, 2};
+
+    std::vector<double> x(N);
+
+
 }
 
 int main(int argc, char** argv) {

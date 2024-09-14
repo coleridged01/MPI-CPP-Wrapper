@@ -14,14 +14,12 @@ scatter(LocalProcess::in_op_args<T>&& args) {
     auto& [data, commSize, size] = args;
     const size_t chunkSize = size / commSize;
     array<T> chunk(chunkSize);
-
-    MPI_Scatter(data.data(), static_cast<int>(sizeof(T) * chunkSize), MPI_BYTE,
-        chunk.data(), static_cast<int>(sizeof(T) * chunkSize), MPI_BYTE,
+    const int read = static_cast<int>(sizeof(T) * chunkSize);
+    MPI_Scatter(data.data(), read, MPI_BYTE,
+        chunk.data(), read, MPI_BYTE,
         static_cast<int>(LocalProcess::Type::ROOT), MPI_COMM_WORLD);
-
     return chunk;
 }
-
 
 template<typename T>
 [[nodiscard]] std::enable_if_t<is_mpi_type<T>::value, array<T>>
@@ -29,9 +27,9 @@ scatter(LocalProcess::in_op_args<T>&& args) {
     auto& [local, data, size] = args;
     const size_t chunkSize = size / static_cast<size_t>(local.commSize());
     array<T> chunk(chunkSize);
-
-    MPI_Scatter(data.data(), static_cast<int>(chunkSize), get_mpi_type<T>(),
-        chunk.data(), static_cast<int>(chunkSize), get_mpi_type<T>(),
+    const int read =  static_cast<int>(chunkSize);
+    MPI_Scatter(data.data(), read, get_mpi_type<T>(),
+        chunk.data(), read, get_mpi_type<T>(),
         static_cast<int>(LocalProcess::Type::ROOT), MPI_COMM_WORLD);
     return chunk;
 }
@@ -68,8 +66,9 @@ gather(LocalProcess::out_op_args<T>&& args) {
     if (local.rank() == static_cast<int>(LocalProcess::Type::ROOT)) {
         data = array<T>(chunk.size() * local.commSize());
     }
-    MPI_Gather(chunk.data(), static_cast<int>(chunk.size()) * sizeof(T), MPI_BYTE,
-            data.data(), static_cast<int>(chunk.size()) * sizeof(T),MPI_BYTE,
+    const int read = static_cast<int>(chunk.size()) * sizeof(T);
+    MPI_Gather(chunk.data(), read, MPI_BYTE,
+            data.data(), read, MPI_BYTE,
             static_cast<int>(LocalProcess::Type::ROOT), MPI_COMM_WORLD);
     return data;
 }
@@ -82,8 +81,9 @@ gather(LocalProcess::out_op_args<T>&& args) {
     if (local.rank() == static_cast<int>(LocalProcess::Type::ROOT)) {
         data = array<T>(chunk.size() * static_cast<size_t>(local.commSize()));
     }
-    MPI_Gather(chunk.data(), static_cast<int>(chunk.size()), get_mpi_type<T>(),
-            data.data(), static_cast<int>(chunk.size()), get_mpi_type<T>(),
+    const int read = static_cast<int>(chunk.size());
+    MPI_Gather(chunk.data(), read, get_mpi_type<T>(),
+            data.data(), read, get_mpi_type<T>(),
             static_cast<int>(LocalProcess::Type::ROOT), MPI_COMM_WORLD);
     return data;
 }
@@ -93,8 +93,9 @@ template<typename T>
 allGather(LocalProcess::out_op_args<T>&& args) {
     auto& [local, chunk] = args;
     array<T> data(chunk.size() * local.commSize());
-    MPI_Allgather(chunk.data(), static_cast<int>(chunk.size() * sizeof(T)), MPI_BYTE,
-            data.data(), static_cast<int>(chunk.size() * sizeof(T)), MPI_BYTE, MPI_COMM_WORLD);
+    const int read = static_cast<int>(chunk.size() * sizeof(T));
+    MPI_Allgather(chunk.data(), read, MPI_BYTE,
+            data.data(), read, MPI_BYTE, MPI_COMM_WORLD);
     return data;
 }
 
@@ -103,9 +104,11 @@ template<typename T>
 allGather(LocalProcess::out_op_args<T>&& args) {
     auto& [local, chunk] = args;
     array<T> data(chunk.size() * local.commSize());
-    MPI_Allgather(chunk.data(), static_cast<int>(chunk.size() * sizeof(T)), get_mpi_type<T>(),
-            data.data(), static_cast<int>(chunk.size() * sizeof(T)), get_mpi_type<T>(),
+    const int read = static_cast<int>(chunk.size());
+    MPI_Allgather(chunk.data(), read, get_mpi_type<T>(),
+            data.data(), read, get_mpi_type<T>(),
             MPI_COMM_WORLD);
+   return data;
 }
 
 template<typename T>
@@ -113,8 +116,9 @@ template<typename T>
 allToAll(LocalProcess::out_op_args<T>&& args) {
     auto& [local, data] = args;
     array<T> ret(data.size() * local.commSize());
-    MPI_Alltoall(data.data(), data.size() * sizeof(T), MPI_BYTE,
-           ret.data(), data.size() * sizeof(T), MPI_BYTE, MPI_COMM_WORLD);
+    const int read = static_cast<int>(data.size()) * sizeof(T);
+    MPI_Alltoall(data.data(), read, MPI_BYTE,
+           ret.data(), read, MPI_BYTE, MPI_COMM_WORLD);
     return ret;
 }
 
