@@ -27,7 +27,7 @@ MPIEnvironment::MPIEnvironment(int &argc, char **&argv) :
     }
 }
 
-int MPIEnvironment::getPoolSize() const {
+int MPIEnvironment::getCommSize() const {
     return commSize_;
 }
 

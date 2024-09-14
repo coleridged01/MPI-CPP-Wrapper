@@ -5,7 +5,7 @@
 #include <Process.h>
 #include <array.h>
 #include <mpi.h>
-#include <helperMapMPI.h>
+#include <mpi_types.h>
 
 
 
@@ -80,7 +80,7 @@ public:
         return {*this, std::move(data), size};
     }
 
-    /// Initializes array for scatter operation with 0
+    /// Initializes an array for scatter operation with 0
     template<typename T>
     in_op_args<T> init(size_t size) const {
         size = roundup(size);

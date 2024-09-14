@@ -14,7 +14,7 @@ public:
 
     MPIEnvironment(int &argc, char** &argv);
 
-    [[nodiscard]] int getPoolSize() const;
+    [[nodiscard]] int getCommSize() const;
 
     [[nodiscard]] std::weak_ptr<LocalProcess> getLocalProcess() const;
 

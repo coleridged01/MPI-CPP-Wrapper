@@ -1,6 +1,7 @@
 #ifndef OPERATIONS_H
 #define OPERATIONS_H
-#include <helperMapMPI.h>
+
+#include <mpi_types.h>
 #include <LocalProcess.h>
 
 
@@ -39,6 +40,9 @@ template<typename T>
 [[nodiscard]]std::enable_if_t<!is_mpi_type<T>::value, array<T>>
 broadcast(LocalProcess::in_op_args<T>&& args) {
     auto& [local, data, size] = args;
+    if (local.rank() != static_cast<int>(LocalProcess::Type::ROOT)) {
+        data = array<T>(size);
+    }
     MPI_Bcast(data.data(), static_cast<int>(data.size) * sizeof(T), MPI_BYTE,
             static_cast<int>(LocalProcess::Type::ROOT), MPI_COMM_WORLD);
     return data;
@@ -48,6 +52,9 @@ template<typename T>
 [[nodiscard]]std::enable_if_t<is_mpi_type<T>::value, array<T>>
 broadcast(LocalProcess::in_op_args<T>&& args) {
     auto& [local, data, size] = args;
+    if (local.rank() != static_cast<int>(LocalProcess::Type::ROOT)) {
+        data = array<T>(size);
+    }
     MPI_Bcast(data.data(), static_cast<int>(data.size()), get_mpi_type<T>(),
         static_cast<int>(LocalProcess::Type::ROOT), MPI_COMM_WORLD);
     return data;
@@ -137,7 +144,10 @@ template<class T>
 [[nodiscard]] std::enable_if_t<is_mpi_type<T>::value, array<T>>
 reduce(LocalProcess::arith_op_args<T>&& op) {
     auto& [local, src, mop] = op;
-    array<T> ret(src.size());
+    array<T> ret;
+    if (local.rank() == static_cast<int>(LocalProcess::Type::ROOT)) {
+        ret = array<T>(src.size());
+    }
     MPI_Reduce(src.data(), ret.data(), static_cast<int>(src.size()),
         get_mpi_type<T>(), mop, static_cast<int>(Process::Type::ROOT), MPI_COMM_WORLD);
     return ret;
