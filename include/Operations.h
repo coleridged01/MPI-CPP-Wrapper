@@ -17,7 +17,7 @@ scatter(LocalProcess::in_op_args<T>&& args) {
     const int read = static_cast<int>(sizeof(T) * chunkSize);
     MPI_Scatter(data.data(), read, MPI_BYTE,
         chunk.data(), read, MPI_BYTE,
-        static_cast<int>(LocalProcess::Type::ROOT), MPI_COMM_WORLD);
+        Process::ROOT, MPI_COMM_WORLD);
     return chunk;
 }
 
@@ -30,7 +30,7 @@ scatter(LocalProcess::in_op_args<T>&& args) {
     const int read =  static_cast<int>(chunkSize);
     MPI_Scatter(data.data(), read, get_mpi_type<T>(),
         chunk.data(), read, get_mpi_type<T>(),
-        static_cast<int>(LocalProcess::Type::ROOT), MPI_COMM_WORLD);
+        Process::ROOT, MPI_COMM_WORLD);
     return chunk;
 }
 
@@ -38,11 +38,11 @@ template<typename T>
 [[nodiscard]]std::enable_if_t<!is_mpi_type<T>::value, array<T>>
 broadcast(LocalProcess::in_op_args<T>&& args) {
     auto& [local, data, size] = args;
-    if (local.rank() != static_cast<int>(LocalProcess::Type::ROOT)) {
+    if (local.rank() != Process::ROOT) {
         data = array<T>(size);
     }
     MPI_Bcast(data.data(), static_cast<int>(data.size) * sizeof(T), MPI_BYTE,
-            static_cast<int>(LocalProcess::Type::ROOT), MPI_COMM_WORLD);
+            Process::ROOT, MPI_COMM_WORLD);
     return data;
 }
 
@@ -50,11 +50,11 @@ template<typename T>
 [[nodiscard]]std::enable_if_t<is_mpi_type<T>::value, array<T>>
 broadcast(LocalProcess::in_op_args<T>&& args) {
     auto& [local, data, size] = args;
-    if (local.rank() != static_cast<int>(LocalProcess::Type::ROOT)) {
+    if (local.rank() != Process::ROOT) {
         data = array<T>(size);
     }
     MPI_Bcast(data.data(), static_cast<int>(data.size()), get_mpi_type<T>(),
-        static_cast<int>(LocalProcess::Type::ROOT), MPI_COMM_WORLD);
+        Process::ROOT, MPI_COMM_WORLD);
     return data;
 }
 
@@ -63,13 +63,13 @@ template<typename T>
 gather(LocalProcess::out_op_args<T>&& args) {
     auto& [local, chunk] = args;
     array<T> data;
-    if (local.rank() == static_cast<int>(LocalProcess::Type::ROOT)) {
+    if (local.rank() == static_cast<int>(Process::ROOT)) {
         data = array<T>(chunk.size() * local.commSize());
     }
     const int read = static_cast<int>(chunk.size()) * sizeof(T);
     MPI_Gather(chunk.data(), read, MPI_BYTE,
             data.data(), read, MPI_BYTE,
-            static_cast<int>(LocalProcess::Type::ROOT), MPI_COMM_WORLD);
+            Process::ROOT, MPI_COMM_WORLD);
     return data;
 }
 
@@ -78,13 +78,13 @@ template<typename T>
 gather(LocalProcess::out_op_args<T>&& args) {
     auto& [local, chunk] = args;
     array<T> data;
-    if (local.rank() == static_cast<int>(LocalProcess::Type::ROOT)) {
+    if (local.rank() == Process::ROOT) {
         data = array<T>(chunk.size() * static_cast<size_t>(local.commSize()));
     }
     const int read = static_cast<int>(chunk.size());
     MPI_Gather(chunk.data(), read, get_mpi_type<T>(),
             data.data(), read, get_mpi_type<T>(),
-            static_cast<int>(LocalProcess::Type::ROOT), MPI_COMM_WORLD);
+            Process::ROOT, MPI_COMM_WORLD);
     return data;
 }
 
@@ -139,7 +139,7 @@ reduce(LocalProcess::arith_op_args<T>&& op) {
         auto& [local, src, mop] = op;
         array<T> ret(src.size());
         MPI_Reduce(src.data(), ret.data(), static_cast<int>(src.size() * sizeof(T)),
-            MPI_BYTE, mop, static_cast<int>(Process::Type::ROOT), MPI_COMM_WORLD);
+            MPI_BYTE, mop, Process::ROOT, MPI_COMM_WORLD);
         return ret;
 }
 
@@ -149,11 +149,11 @@ template<class T>
 reduce(LocalProcess::arith_op_args<T>&& op) {
     auto& [local, src, mop] = op;
     array<T> ret;
-    if (local.rank() == static_cast<int>(LocalProcess::Type::ROOT)) {
+    if (local.rank() == Process::ROOT) {
         ret = array<T>(src.size());
     }
     MPI_Reduce(src.data(), ret.data(), static_cast<int>(src.size()),
-        get_mpi_type<T>(), mop, static_cast<int>(Process::Type::ROOT), MPI_COMM_WORLD);
+        get_mpi_type<T>(), mop, Process::ROOT, MPI_COMM_WORLD);
     return ret;
 }
 

@@ -51,29 +51,52 @@ public:
         T* ptr_;
     };
 
-    array() : array_(nullptr), size_(0) {}
+    array() : size_(0), array_(nullptr) {}
 
     explicit array(const size_t size)
-        : array_(new T[size]), size_(size) {
+        : size_(size), array_(new T[size_]) {
         if (!array_) {
             throw std::bad_alloc();
         }
     }
 
     explicit array(const std::vector<T>& vector)
-        : array_(new T[vector.size()]), size_(vector.size()) {
+        : size_(vector.size()), array_(new T[size_]) {
         if (!array_) {
             throw std::bad_alloc();
         }
         std::copy(vector.begin(), vector.end(), this->begin());
     }
 
+    explicit array(const std::vector<T>& vector, const size_t offset, const size_t size)
+        : size_(size), array_(new T[size_]) {
+        if (!array_) {
+            throw std::bad_alloc();
+        }
+        const size_t diff = size_ - size;
+        std::copy(vector.begin() + static_cast<long>(offset),
+            vector.end() - static_cast<long>(diff), this->begin());
+    }
+
     array(const array& other)
-        : array_(new T[other.size()]), size_(other.size()) {
+        : size_(other.size()), array_(new T[size_]) {
         if (!array_) {
             throw std::bad_alloc();
         }
         std::copy(other.begin(), other.end(), this->begin());
+    }
+
+    explicit array(const array& other, const size_t offset, const size_t size)
+        : size_(size), array_(new T[size_]) {
+        if (offset + size > other.size()) {
+            throw std::out_of_range("array::array");
+        }
+        if (!array_) {
+            throw std::bad_alloc();
+        }
+        const size_t diff = size_ - size;
+        std::copy(other.begin() + static_cast<long>(offset),
+                  other.end() - static_cast<long>(diff), this->begin());
     }
 
     array(array&& other) noexcept {
@@ -81,6 +104,16 @@ public:
         size_ = other.size_;
         other.array_ = nullptr;
         other.size_ = 0;
+    }
+
+    array(std::initializer_list<T> init_list)
+        : size_(init_list.size()), array_(new T[size_]) {
+        std::copy(init_list.begin(), init_list.end(), array_);
+    }
+
+    explicit operator std::vector<T>() {
+        return std::vector<T>(std::make_move_iterator(this->begin()),
+                          std::make_move_iterator(this->end()));
     }
 
     array& operator=(const array& other) {
@@ -131,11 +164,14 @@ public:
 
 private:
 
-    T* array_;
-
     size_t size_;
 
+    T* array_;
+
 };
+
+template<typename T>
+array(T, size_t) -> array<T>;
 
 
 }

@@ -8,10 +8,7 @@ namespace mpi {
 class Process {
 public:
 
-    enum class Type {
-        ROOT,
-        WORKER
-    };
+    static int ROOT;
 
     explicit Process(const int rank, const int commSize) : rank_(rank), commSize_(commSize) {}
 
@@ -26,8 +23,6 @@ public:
     [[nodiscard]] int rank() const;
 
     [[nodiscard]] int commSize() const;
-
-    bool operator==(Type type) const;
 
 protected:
 

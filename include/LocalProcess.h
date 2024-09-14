@@ -6,6 +6,8 @@
 #include <array.h>
 #include <mpi.h>
 #include <mpi_types.h>
+#include <utility>
+#include <functional> // For std::invoke
 
 
 
@@ -49,15 +51,20 @@ public:
 
     explicit LocalProcess(const int rank, const int commSize) : Process(rank, commSize) {}
 
+    // Assigns new Root Process
+    void operator()(const int newRoot) const {
+        ROOT = newRoot;
+    }
+
     /// Runs on root
     void operator()(const std::function<void()>& func) const {
-        if (this->rank_ == static_cast<int>(Type::ROOT)) {
+        if (this->rank_ == ROOT) {
             func();
         }
     }
 
     auto operator~() const {
-        return ProcessFunctor([this] { return rank_ != static_cast<int>(Type::ROOT); });
+        return ProcessFunctor([this] { return rank_ != ROOT; });
     }
 
     auto operator[](const int runOn) const {
@@ -67,15 +74,15 @@ public:
         throw std::out_of_range("LocalProcess::operator[]");
     }
 
-    /// Initializes an array for scatter operation
-    template<typename T>
-    in_op_args<T> init(void(*initData)(const array<T>&), size_t size) const {
+    template<typename T, typename Func, typename... Args>
+    in_op_args<T> init(Func&& initData, size_t size, const Args&... args) const {
         size = roundup(size);
 
         array<T> data;
-        if (this->rank_ == static_cast<int>(Type::ROOT)) {
+        if (this->rank_ == ROOT) {
             data = array<T>(size);
-            initData(data);
+            initData(data, args...);
+
         }
         return {*this, std::move(data), size};
     }
@@ -86,7 +93,7 @@ public:
         size = roundup(size);
 
         array<T> data;
-        if (this->rank_ == static_cast<int>(Type::ROOT)) {
+        if (this->rank_ == ROOT) {
             data = array<T>(size);
             data.clear();
         }
