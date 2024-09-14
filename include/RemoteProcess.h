@@ -41,48 +41,51 @@ public:
         template<typename T>
         std::enable_if_t<is_mpi_type<T>::value, void>
         operator<<(const T& data) {
-            MPI_Send(&data, 1, get_mpi_type<T>(), rank_, 0, MPI_COMM_WORLD);
-        }
-
-        template <typename T>
-        std::enable_if_t<!is_mpi_type<T>::value, void>
-        operator>>(const T& data) {
-            MPI_Recv(&data, sizeof(T), MPI_BYTE, rank_, 0, MPI_COMM_WORLD, MPI_STATUS_IGNORE);
-        }
-
-        template <typename T>
-        std::enable_if_t<is_mpi_type<T>::value, void>
-        operator>>(const T& data) {
-            MPI_Recv(&data, 1, get_mpi_type<T>(), rank_, 0, MPI_COMM_WORLD, MPI_STATUS_IGNORE);
-        }
-
-        template<typename T>
-        std::enable_if_t<!is_mpi_type<T>::value, void>
-        operator<<(const array<T>& data) {
-            MPI_Send(data.data(), static_cast<int>(data.size() * sizeof(T)), MPI_BYTE, rank_, 0, MPI_COMM_WORLD);
-        }
-
-        template<typename T>
-        std::enable_if_t<is_mpi_type<T>::value, void>
-        operator<<(const array<T>& data) {
-            MPI_Send(data.data(), static_cast<int>(data.size()), get_mpi_type<T>(), rank_, 0,
+            MPI_Send(&data, 1, get_mpi_type<T>(), rank_, 0,
                 MPI_COMM_WORLD);
         }
 
         template <typename T>
         std::enable_if_t<!is_mpi_type<T>::value, void>
-        operator>>(const array<T>& data) {
-            MPI_Recv(data.data(), static_cast<int>(data.size()) * sizeof(T), MPI_BYTE, rank_, 0,
+        operator>>(const T& data) {
+            MPI_Recv(&data, sizeof(T), MPI_BYTE, rank_, 0,
                 MPI_COMM_WORLD, MPI_STATUS_IGNORE);
         }
 
         template <typename T>
         std::enable_if_t<is_mpi_type<T>::value, void>
-        operator>>(const array<T>& data) {
-            MPI_Recv(data.data(), static_cast<int>(data.size()), get_mpi_type<T>(), rank_, 0,
+        operator>>(const T& data) {
+            MPI_Recv(&data, 1, get_mpi_type<T>(), rank_, 0,
                 MPI_COMM_WORLD, MPI_STATUS_IGNORE);
         }
 
+        template<typename T>
+        std::enable_if_t<!is_mpi_type<T>::value, void>
+        operator<<(const array<T>& data) {
+            MPI_Send(data.data(), static_cast<int>(data.size() * sizeof(T)),
+                MPI_BYTE, rank_, 0, MPI_COMM_WORLD);
+        }
+
+        template<typename T>
+        std::enable_if_t<is_mpi_type<T>::value, void>
+        operator<<(const array<T>& data) {
+            MPI_Send(data.data(), static_cast<int>(data.size()),
+                get_mpi_type<T>(), rank_, 0, MPI_COMM_WORLD);
+        }
+
+        template <typename T>
+        std::enable_if_t<!is_mpi_type<T>::value, void>
+        operator>>(const array<T>& data) {
+            MPI_Recv(data.data(), static_cast<int>(data.size()) * sizeof(T),
+                MPI_BYTE, rank_, 0, MPI_COMM_WORLD, MPI_STATUS_IGNORE);
+        }
+
+        template <typename T>
+        std::enable_if_t<is_mpi_type<T>::value, void>
+        operator>>(const array<T>& data) {
+            MPI_Recv(data.data(), static_cast<int>(data.size()),
+                get_mpi_type<T>(), rank_, 0, MPI_COMM_WORLD, MPI_STATUS_IGNORE);
+        }
 
     private:
 
@@ -98,7 +101,8 @@ public:
         std::enable_if_t<!is_mpi_type<T>::value, Awaitable>
         operator<<(const T& data) {
             auto request = std::make_unique<MPI_Request>();
-            MPI_Isend(&data, sizeof(T), MPI_BYTE, rank_, 0, MPI_COMM_WORLD, request.get());
+            MPI_Isend(&data, sizeof(T), MPI_BYTE, rank_, 0,
+                MPI_COMM_WORLD, request.get());
             return Awaitable(std::move(request));
         }
 
@@ -106,7 +110,8 @@ public:
         std::enable_if_t<is_mpi_type<T>::value, Awaitable>
         operator<<(const T& data) {
             auto request = std::make_unique<MPI_Request>();
-            MPI_Isend(&data, 1, get_mpi_type<T>(), rank_, 0, MPI_COMM_WORLD, request.get());
+            MPI_Isend(&data, 1, get_mpi_type<T>(), rank_, 0,
+                MPI_COMM_WORLD, request.get());
             return Awaitable(std::move(request));
         }
 
@@ -114,7 +119,8 @@ public:
         std::enable_if_t<!is_mpi_type<T>::value, Awaitable>
         operator>>(const T& data) {
             auto request = std::make_unique<MPI_Request>();
-            MPI_Irecv(&data, sizeof(T), MPI_BYTE, rank_, 0, MPI_COMM_WORLD, request.get());
+            MPI_Irecv(&data, sizeof(T), MPI_BYTE, rank_, 0,
+                MPI_COMM_WORLD, request.get());
             return Awaitable(std::move(request));
         }
 
@@ -122,7 +128,8 @@ public:
         std::enable_if_t<is_mpi_type<T>::value, Awaitable>
         operator>>(const T& data) {
             auto request = std::make_unique<MPI_Request>();
-            MPI_Irecv(&data, 1, get_mpi_type<T>(), rank_, 0, MPI_COMM_WORLD, request.get());
+            MPI_Irecv(&data, 1, get_mpi_type<T>(), rank_, 0,
+                MPI_COMM_WORLD, request.get());
             return Awaitable(std::move(request));
         }
 
@@ -130,7 +137,8 @@ public:
         std::enable_if_t<!is_mpi_type<T>::value, Awaitable>
         operator<<(const array<T>& data) {
             auto request = std::make_unique<MPI_Request>();
-            MPI_Isend(data.data(), static_cast<int>(data.size() * sizeof(T)), MPI_BYTE, rank_, 0, MPI_COMM_WORLD, request.get());
+            MPI_Isend(data.data(), static_cast<int>(data.size() * sizeof(T)),
+                MPI_BYTE, rank_, 0, MPI_COMM_WORLD, request.get());
             return Awaitable(std::move(request));
         }
 
@@ -138,7 +146,8 @@ public:
         std::enable_if_t<is_mpi_type<T>::value, Awaitable>
         operator<<(const array<T>& data) {
             auto request = std::make_unique<MPI_Request>();
-            MPI_Isend(data.data(), static_cast<int>(data.size()), get_mpi_type<T>(), rank_, 0, MPI_COMM_WORLD, request.get());
+            MPI_Isend(data.data(), static_cast<int>(data.size()),
+                get_mpi_type<T>(), rank_, 0, MPI_COMM_WORLD, request.get());
             return Awaitable(std::move(request));
         }
 
@@ -146,7 +155,8 @@ public:
         std::enable_if_t<!is_mpi_type<T>::value, Awaitable>
         operator>>(const array<T>& data) {
             auto request = std::make_unique<MPI_Request>();
-            MPI_Irecv(data.data(), static_cast<int>(data.size()) * sizeof(T), MPI_BYTE, rank_, 0, MPI_COMM_WORLD, request.get());
+            MPI_Irecv(data.data(), static_cast<int>(data.size()) * sizeof(T),
+                MPI_BYTE, rank_, 0, MPI_COMM_WORLD, request.get());
             return Awaitable(std::move(request));
         }
 
@@ -154,7 +164,8 @@ public:
         std::enable_if_t<is_mpi_type<T>::value, Awaitable>
         operator>>(const array<T>& data) {
             auto request = std::make_unique<MPI_Request>();
-            MPI_Irecv(data.data(), static_cast<int>(data.size()), get_mpi_type<T>(), rank_, 0, MPI_COMM_WORLD, request.get());
+            MPI_Irecv(data.data(), static_cast<int>(data.size()),
+                get_mpi_type<T>(), rank_, 0, MPI_COMM_WORLD, request.get());
             return Awaitable(std::move(request));
         }
 

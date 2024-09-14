@@ -2,13 +2,11 @@
 #include <doctest/doctest.h>
 #include <MPIEnvironment.h>
 #include <Operations.h>
+
 #include <thread>
 #include <iostream>
 #include <vector>
 #include <cmath>
-#include <iomanip>
-#include <sstream>
-#include <stdexcept>
 
 
 
@@ -127,13 +125,13 @@ TEST_CASE("Scatter&AllReduce") {
 
     mpi::array chunk = mpi::scatter(
     local->init<int>(
-        [](const mpi::array<int>& data) {
-            CHECK(data.size() == 32);
+        [](const mpi::array<int>& data, size_t datasize) {
+            CHECK(data.size() == datasize);
             CHECK(data[0] == 0);
             for (int i = 0; auto& val : data) {
                 val = i++;
             }
-        }, DATASIZE)
+        }, DATASIZE, DATASIZE)
     );
 
     CHECK(chunk.size() == DATASIZE / static_cast<size_t>(mpi_env->getCommSize()));

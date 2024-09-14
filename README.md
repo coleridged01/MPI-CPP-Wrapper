@@ -17,7 +17,7 @@ it includes support for common operations like scatter, gather, reduce, all-redu
 
 - **Idiomatic C++ Interface**: Provides a clean and familiar interface for C++ developers, avoiding raw pointers and manual memory management.
 
-- **RAII (Resource Acquisition Is Initialization)**: Automatically manages resources, ensuring proper cleanup of MPI objects and reducing the risk of memory leaks.
+- **RAII**: Automatically manages resources, ensuring proper cleanup of MPI objects and reducing the risk of memory leaks.
 
 - **Templates and SFINAE**: Leverages C++ templates and SFINAE to allow for flexible and type-safe APIs that adapt to various data types and scenarios.
 
@@ -43,10 +43,6 @@ it includes support for common operations like scatter, gather, reduce, all-redu
 - **Integration with STL and Other Libraries**: Seamlessly works with the standard C++ library and can be integrated with other common libraries and frameworks.
 
 - **Unit Tests and Documentation**: Comes with unit tests and examples to help developers get started quickly.
-
-## Examples
-
-### Gaussian Elimination
 
 ## Dependencies
 
