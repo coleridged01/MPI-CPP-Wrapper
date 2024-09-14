@@ -9,7 +9,7 @@ namespace mpi {
 
 template<typename T>
 [[nodiscard]] std::enable_if_t<!is_mpi_type<T>::value, array<T>>
-scatter(LocalProcess::scatter_op_args<T>&& args) {
+scatter(LocalProcess::in_op_args<T>&& args) {
     auto& [data, commSize, size] = args;
     const size_t chunkSize = size / commSize;
     array<T> chunk(chunkSize);
@@ -24,7 +24,7 @@ scatter(LocalProcess::scatter_op_args<T>&& args) {
 
 template<typename T>
 [[nodiscard]] std::enable_if_t<is_mpi_type<T>::value, array<T>>
-scatter(LocalProcess::scatter_op_args<T>&& args) {
+scatter(LocalProcess::in_op_args<T>&& args) {
     auto& [local, data, size] = args;
     const size_t chunkSize = size / static_cast<size_t>(local.commSize());
     array<T> chunk(chunkSize);
@@ -37,8 +37,8 @@ scatter(LocalProcess::scatter_op_args<T>&& args) {
 
 template<typename T>
 [[nodiscard]]std::enable_if_t<!is_mpi_type<T>::value, array<T>>
-broadcast(LocalProcess::dist_op_args<T>&& args) {
-    auto& [local, data] = args;
+broadcast(LocalProcess::in_op_args<T>&& args) {
+    auto& [local, data, size] = args;
     MPI_Bcast(data.data(), static_cast<int>(data.size) * sizeof(T), MPI_BYTE,
             static_cast<int>(LocalProcess::Type::ROOT), MPI_COMM_WORLD);
     return data;
@@ -46,8 +46,8 @@ broadcast(LocalProcess::dist_op_args<T>&& args) {
 
 template<typename T>
 [[nodiscard]]std::enable_if_t<is_mpi_type<T>::value, array<T>>
-broadcast(LocalProcess::dist_op_args<T>&& args) {
-    auto& [local, data] = args;
+broadcast(LocalProcess::in_op_args<T>&& args) {
+    auto& [local, data, size] = args;
     MPI_Bcast(data.data(), static_cast<int>(data.size()), get_mpi_type<T>(),
         static_cast<int>(LocalProcess::Type::ROOT), MPI_COMM_WORLD);
     return data;
@@ -55,7 +55,7 @@ broadcast(LocalProcess::dist_op_args<T>&& args) {
 
 template<typename T>
 [[nodiscard]]std::enable_if_t<!is_mpi_type<T>::value, array<T>>
-gather(LocalProcess::dist_op_args<T>&& args) {
+gather(LocalProcess::out_op_args<T>&& args) {
     auto& [local, chunk] = args;
     array<T> data;
     if (local.rank() == static_cast<int>(LocalProcess::Type::ROOT)) {
@@ -69,7 +69,7 @@ gather(LocalProcess::dist_op_args<T>&& args) {
 
 template<typename T>
 [[nodiscard]] std::enable_if_t<is_mpi_type<T>::value, array<T>>
-gather(LocalProcess::dist_op_args<T>&& args) {
+gather(LocalProcess::out_op_args<T>&& args) {
     auto& [local, chunk] = args;
     array<T> data;
     if (local.rank() == static_cast<int>(LocalProcess::Type::ROOT)) {
@@ -83,7 +83,7 @@ gather(LocalProcess::dist_op_args<T>&& args) {
 
 template<typename T>
 [[nodiscard]]std::enable_if_t<!is_mpi_type<T>::value, array<T>>
-allGather(LocalProcess::dist_op_args<T>&& args) {
+allGather(LocalProcess::out_op_args<T>&& args) {
     auto& [local, chunk] = args;
     array<T> data(chunk.size() * local.commSize());
     MPI_Allgather(chunk.data(), static_cast<int>(chunk.size() * sizeof(T)), MPI_BYTE,
@@ -93,7 +93,7 @@ allGather(LocalProcess::dist_op_args<T>&& args) {
 
 template<typename T>
 [[nodiscard]]std::enable_if_t<is_mpi_type<T>::value, array<T>>
-allGather(LocalProcess::dist_op_args<T>&& args) {
+allGather(LocalProcess::out_op_args<T>&& args) {
     auto& [local, chunk] = args;
     array<T> data(chunk.size() * local.commSize());
     MPI_Allgather(chunk.data(), static_cast<int>(chunk.size() * sizeof(T)), get_mpi_type<T>(),
@@ -103,7 +103,7 @@ allGather(LocalProcess::dist_op_args<T>&& args) {
 
 template<typename T>
 [[nodiscard]] std::enable_if_t<!is_mpi_type<T>::value, array<T>>
-allToAll(LocalProcess::dist_op_args<T>&& args) {
+allToAll(LocalProcess::out_op_args<T>&& args) {
     auto& [local, data] = args;
     array<T> ret(data.size() * local.commSize());
     MPI_Alltoall(data.data(), data.size() * sizeof(T), MPI_BYTE,
@@ -113,7 +113,7 @@ allToAll(LocalProcess::dist_op_args<T>&& args) {
 
 template<typename T>
 [[nodiscard]] std::enable_if_t<is_mpi_type<T>::value, array<T>>
-allToAll(LocalProcess::dist_op_args<T>&& args) {
+allToAll(LocalProcess::out_op_args<T>&& args) {
     auto& [local, data] = args;
     array<T> ret(data.size() * local.commSize());
     MPI_Alltoall(data.data(), data.size(), get_mpi_type<T>(),

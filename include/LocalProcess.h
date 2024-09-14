@@ -42,10 +42,10 @@ public:
     using arith_op_args = std::tuple<const LocalProcess&, array<T>, MPI_Op>;
 
     template<typename T>
-    using scatter_op_args = std::tuple<const LocalProcess&, array<T>, size_t>;
+    using in_op_args = std::tuple<const LocalProcess&, array<T>, size_t>;
 
     template<typename T>
-    using dist_op_args = std::tuple<const LocalProcess&, array<T>>;
+    using out_op_args = std::tuple<const LocalProcess&, array<T>>;
 
     explicit LocalProcess(const int rank, const int commSize) : Process(rank, commSize) {}
 
@@ -69,7 +69,7 @@ public:
 
     /// Initializes an array for scatter operation
     template<typename T>
-    scatter_op_args<T> init(void(*initData)(const array<T>&), size_t size) const {
+    in_op_args<T> init(void(*initData)(const array<T>&), size_t size) const {
         size = roundup(size);
 
         array<T> data;
@@ -82,7 +82,7 @@ public:
 
     /// Initializes array for scatter operation with 0
     template<typename T>
-    scatter_op_args<T> init(size_t size) const {
+    in_op_args<T> init(size_t size) const {
         size = roundup(size);
 
         array<T> data;
@@ -95,7 +95,7 @@ public:
 
     /// Binds chunk with LocalProcess
     template<typename T>
-    dist_op_args<T> forward(array<T>&& chunk) const {
+    out_op_args<T> forward(array<T>&& chunk) const {
         return {*this, std::move(chunk)};
     }
 
